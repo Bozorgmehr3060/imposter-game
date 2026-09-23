@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Imposter Game — a small browser-based social deduction game built by Bozorgmehr Ghafoori." />
+  <title>Imposter Game</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0d1b2d;
+      --panel-2: #12243a;
+      --line: #28425f;
+      --text: #eef6ff;
+      --muted: #98adc3;
+      --accent: #2f8cff;
+      --accent-2: #58a6ff;
+      --good: #35c987;
+      --warn: #ffb84d;
+      --bad: #ff5f67;
+      --shadow: 0 18px 45px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(47,140,255,.12), transparent 28rem),
+        radial-gradient(circle at 85% 30%, rgba(88,166,255,.08), transparent 24rem),
+        var(--bg);
+      color: var(--text);
+    }
+    button, input { font: inherit; }
+    .app {
+      width: min(1120px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #1f6ed4, #0c417f);
+      box-shadow: var(--shadow);
+      font-size: 20px;
+    }
+    .tiny {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+    .panel {
+      background: linear-gradient(180deg, rgba(18,36,58,.96), rgba(13,27,45,.96));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .intro {
+      padding: 30px;
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .intro::after {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      right: -80px;
+      bottom: -90px;
+      border: 1px solid rgba(88,166,255,.25);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 32px rgba(88,166,255,.04),
+        0 0 0 64px rgba(88,166,255,.03);
+      pointer-events: none;
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: .75rem;
+      font-weight: 800;
+      color: var(--accent-2);
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2.3rem, 7vw, 5rem);
+      line-height: .96;
+      letter-spacing: -.04em;
+    }
+    .subtitle {
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 1.04rem;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .status-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+    }
+    .status-title {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat {
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat strong {
+      display: block;
+      font-size: 1.55rem;
+      margin-top: 4px;
+    }
+    .primary, .secondary, .danger {
+      border: 0;
+      border-radius: 12px;
+      min-height: 46px;
+      padding: 0 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .14s ease, filter .14s ease, opacity .14s ease;
+    }
+    .primary {
+      color: white;
+      background: linear-gradient(180deg, #3395ff, #1978df);
+    }
+    .secondary {
+      color: var(--text);
+      background: #1a2d44;
+      border: 1px solid #35516f;
+    }
+    .danger {
+      color: #ffeef0;
+      background: #6b2430;
+      border: 1px solid #9f3c49;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .45; filter: none; }
+    .game-grid {
+      display: grid;
+      grid-template-columns: 1fr .72fr;
+      gap: 20px;
+    }
+    .game-panel { padding: 22px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    .round-pill {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: .9rem;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.025);
+    }
+    .crew-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .crew {
+      width: 100%;
+      text-align: left;
+      color: inherit;
+      background: rgba(255,255,255,.025);
+      border: 1px solid #2b4663;
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      min-height: 142px;
+      transition: background .14s ease, border-color .14s ease, transform .14s ease;
+    }
+    .crew:hover { background: rgba(255,255,255,.045); }
+    .crew.selected {
+      border-color: var(--accent-2);
+      box-shadow: inset 0 0 0 1px var(--accent-2);
+      background: rgba(47,140,255,.09);
+    }
+    .crew-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .crew-name {
+      font-weight: 900;
+      font-size: 1.02rem;
+    }
+    .crew-role {
+      color: var(--muted);
+      font-size: .82rem;
+      margin-top: 2px;
+    }
+    .suspicion {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+    .meter {
+      height: 8px;
+      border-radius: 999px;
+      background: #071321;
+      border: 1px solid #29455f;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .meter > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3d9aff, #ffb84d, #ff5f67);
+      transition: width .3s ease;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .side {
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+    .log-panel, .mission-panel { padding: 22px; }
+    .log {
+      display: grid;
+      gap: 10px;
+      max-height: 370px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .log-entry {
+      border-left: 3px solid #35516f;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.025);
+      border-radius: 0 10px 10px 0;
+      color: #c9d8e8;
+      line-height: 1.45;
+      font-size: .93rem;
+    }
+    .log-entry.good { border-color: var(--good); }
+    .log-entry.warn { border-color: var(--warn); }
+    .log-entry.bad { border-color: var(--bad); }
+    .mission-panel p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0 0 14px;
+    }
+    .result {
+      display: none;
+      margin-top: 18px;
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      line-height: 1.55;
+    }
+    .result.show { display: block; }
+    .result.win { border-color: rgba(53,201,135,.55); }
+    .result.lose { border-color: rgba(255,95,103,.55); }
+    .footer {
+      color: var(--muted);
+      font-size: .86rem;
+      text-align: center;
+      padding-top: 24px;
+    }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .82rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid #3b536d;
+      background: #102238;
+      color: #d9e9fb;
+    }
+    @media (max-width: 820px) {
+      .hero, .game-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .app { width: min(100% - 18px, 1120px); padding-top: 16px; }
+      .topbar { align-items: flex-start; }
+      .crew-grid { grid-template-columns: 1fr; }
+      .intro, .game-panel, .log-panel, .mission-panel, .status-card { padding: 18px; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 2.75rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">◎</div>
+        <div>
+          <div>Imposter Game</div>
+          <div class="tiny">Social deduction mini-game</div>
+        </div>
+      </div>
+      <div class="tiny">Built by Bozorgmehr Ghafoori</div>
+    </header>
+    <section class="hero">
+      <div class="panel intro">
+        <div class="eyebrow">Shipboard anomaly detected</div>
+        <h1>TRUST<br>THE DATA.</h1>
+        <p class="subtitle">One of four crew members is sabotaging the mission. Observe behavior, compare clues, select a suspect, and make your accusation before the final round.</p>
+      </div>
+      <aside class="panel status-card" aria-label="Game status">
+        <div>
+          <h2 class="status-title">Mission Status</h2>
+          <div class="tiny">Every observation reveals imperfect evidence. Suspicion is useful, but it is not proof.</div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><span class="tiny">Score</span><strong id="score">0</strong></div>
+          <div class="stat"><span class="tiny">Streak</span><strong id="streak">0</strong></div>
+          <div class="stat"><span class="tiny">Round</span><strong id="roundStat">0/3</strong></div>
+          <div class="stat"><span class="tiny">Selected</span><strong id="selectedStat">—</strong></div>
+        </div>
+        <button class="primary" id="newGameBtn" type="button">Start New Mission</button>
+      </aside>
+    </section>
+    <section class="game-grid">
+      <div class="panel game-panel">
+        <div class="section-head">
+          <h2>Crew Roster</h2>
+          <div class="round-pill" id="roundPill">Waiting to begin</div>
+        </div>
+        <div class="crew-grid" id="crewGrid" aria-label="Crew suspects"></div>
+        <div class="actions">
+          <button class="secondary" id="observeBtn" type="button" disabled>Observe Round</button>
+          <button class="danger" id="accuseBtn" type="button" disabled>Accuse Selected</button>
+        </div>
+        <div class="result" id="result" role="status" aria-live="polite"></div>
+      </div>
+      <div class="side">
+        <section class="panel log-panel">
+          <div class="section-head">
+            <h2>Observation Log</h2>
+            <span class="tiny">Evidence stream</span>
+          </div>
+          <div class="log" id="log">
+            <div class="log-entry">Start a new mission, then observe up to three rounds of crew behavior.</div>
+          </div>
+        </section>
+        <section class="panel mission-panel">
+          <div class="section-head">
+            <h2>How to Play</h2>
+          </div>
+          <p>1. Start a mission. The imposter is chosen randomly.</p>
+          <p>2. Press <span class="kbd">Observe Round</span> to reveal one event for each crew member.</p>
+          <p>3. Select the crew member you suspect. Suspicion meters summarize the evidence you have seen.</p>
+          <p>4. Accuse at any time. Correct accusations score more points when made earlier.</p>
+        </section>
+      </div>
+    </section>
+    <footer class="footer">A lightweight browser game built with HTML, CSS, and JavaScript.</footer>
+  </main>
+  <script>
+    (() => {
+      const root = document.getElementById('app');
+      if (!root || root.dataset.ready === '1') return;
+      root.dataset.ready = '1';
+      const crewBase = [
+        { name: 'Nova', color: '#4b8cff' },
+        { name: 'Orion', color: '#7c5cff' },
+        { name: 'Mira', color: '#20b486' },
+        { name: 'Sol', color: '#e77b3f' }
+      ];
+      const benignEvents = [
+        { text: 'completed a navigation calibration on schedule.', delta: -8, tone: 'good' },
+        { text: 'reported a damaged relay before it failed.', delta: -7, tone: 'good' },
+        { text: 'helped another crew member restore oxygen flow.', delta: -9, tone: 'good' },
+        { text: 'was recorded entering and leaving engineering normally.', delta: -5, tone: 'good' },
+        { text: 'finished a diagnostics task with no anomalies.', delta: -6, tone: 'good' },
+        { text: 'paused near a restricted hatch, then returned to task.', delta: 7, tone: 'warn' },
+        { text: 'missed one check-in while moving between rooms.', delta: 8, tone: 'warn' }
+      ];
+      const imposterEvents = [
+        { text: 'was near the reactor shortly before a systems fault.', delta: 18, tone: 'bad' },
+        { text: 'submitted a task completion record with inconsistent timing.', delta: 16, tone: 'bad' },
+        { text: 'appeared on two access logs that should not overlap.', delta: 21, tone: 'bad' },
+        { text: 'left communications moments before a signal blackout.', delta: 19, tone: 'bad' },
+        { text: 'claimed to repair a subsystem that was already operational.', delta: 23, tone: 'bad' },
+        { text: 'completed a normal scan without triggering any alerts.', delta: -4, tone: 'good' },
+        { text: 'helped stabilize power during a minor voltage drop.', delta: -5, tone: 'good' }
+      ];
+      const state = {
+        round: 0,
+        score: 0,
+        streak: 0,
+        imposterIndex: -1,
+        selectedIndex: -1,
+        active: false,
+        crew: []
+      };
+      const crewGrid = document.getElementById('crewGrid');
+      const log = document.getElementById('log');
+      const result = document.getElementById('result');
+      const observeBtn = document.getElementById('observeBtn');
+      const accuseBtn = document.getElementById('accuseBtn');
+      const newGameBtn = document.getElementById('newGameBtn');
+      const scoreEl = document.getElementById('score');
+      const streakEl = document.getElementById('streak');
+      const roundStat = document.getElementById('roundStat');
+      const selectedStat = document.getElementById('selectedStat');
+      const roundPill = document.getElementById('roundPill');
+      const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+      const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+      function renderCrew() {
+        crewGrid.innerHTML = '';
+        state.crew.forEach((member, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'crew' + (state.selectedIndex === index ? ' selected' : '');
+          btn.setAttribute('aria-pressed', state.selectedIndex === index ? 'true' : 'false');
+          btn.innerHTML = '<div class="crew-top"><div class="avatar" style="background:' + member.color + '">' + member.name[0] + '</div><div><div class="crew-name">' + member.name + '</div><div class="crew-role">Systems crew</div></div></div><div class="suspicion"><span>Suspicion</span><strong>' + member.suspicion + '%</strong></div><div class="meter" aria-hidden="true"><span style="width:' + member.suspicion + '%"></span></div>';
+          btn.addEventListener('click', () => {
+            if (!state.active) return;
+            state.selectedIndex = index;
+            selectedStat.textContent = member.name;
+            accuseBtn.disabled = false;
+            renderCrew();
+          });
+          crewGrid.appendChild(btn);
+        });
+      }
+      function addLog(message, tone = '') {
+        const item = document.createElement('div');
+        item.className = 'log-entry' + (tone ? ' ' + tone : '');
+        item.textContent = message;
+        log.prepend(item);
+      }
+      function updateStatus() {
+        scoreEl.textContent = String(state.score);
+        streakEl.textContent = String(state.streak);
+        roundStat.textContent = state.round + '/3';
+        roundPill.textContent = state.active
+          ? (state.round === 0 ? 'Mission active' : 'Observation ' + state.round + ' of 3')
+          : 'Mission ended';
+      }
+      function startMission() {
+        state.round = 0;
+        state.selectedIndex = -1;
+        state.imposterIndex = Math.floor(Math.random() * crewBase.length);
+        state.active = true;
+        state.crew = crewBase.map(person => ({ ...person, suspicion: 20 }));
+        log.innerHTML = '';
+        result.className = 'result';
+        result.textContent = '';
+        selectedStat.textContent = '—';
+        observeBtn.disabled = false;
+        accuseBtn.disabled = true;
+        addLog('Mission started. One crew member has been assigned as the imposter.', 'warn');
+        renderCrew();
+        updateStatus();
+      }
+      function observeRound() {
+        if (!state.active || state.round >= 3) return;
+        state.round += 1;
+        state.crew.forEach((member, index) => {
+          const isImposter = index === state.imposterIndex;
+          const pool = isImposter ? imposterEvents : benignEvents;
+          const event = pick(pool);
+          member.suspicion = clamp(member.suspicion + event.delta, 2, 98);
+          addLog(member.name + ' ' + event.text, event.tone);
+        });
+        if (state.round >= 3) {
+          observeBtn.disabled = true;
+          addLog('Final observation complete. Make an accusation.', 'warn');
+        }
+        renderCrew();
+        updateStatus();
+      }
+      function accuse() {
+        if (!state.active || state.selectedIndex < 0) return;
+        const accused = state.crew[state.selectedIndex];
+        const imposter = state.crew[state.imposterIndex];
+        const correct = state.selectedIndex === state.imposterIndex;
+        state.active = false;
+        observeBtn.disabled = true;
+        accuseBtn.disabled = true;
+        if (correct) {
+          const roundBonus = state.round === 0 ? 300 : state.round === 1 ? 220 : state.round === 2 ? 160 : 110;
+          const gain = roundBonus + state.streak * 20;
+          state.score += gain;
+          state.streak += 1;
+          result.className = 'result show win';
+          result.innerHTML = '<strong>Correct.</strong> ' + accused.name + ' was the imposter. +' + gain + ' points.';
+          addLog('Accusation confirmed: ' + accused.name + ' was the imposter.', 'good');
+        } else {
+          state.streak = 0;
+          state.score = Math.max(0, state.score - 60);
+          result.className = 'result show lose';
+          result.innerHTML = '<strong>Incorrect.</strong> ' + accused.name + ' was cleared. The imposter was ' + imposter.name + '.';
+          addLog('Wrong accusation. The imposter was ' + imposter.name + '.', 'bad');
+        }
+        renderCrew();
+        updateStatus();
+      }
+      newGameBtn.addEventListener('click', startMission);
+      observeBtn.addEventListener('click', observeRound);
+      accuseBtn.addEventListener('click', accuse);
+      state.crew = crewBase.map(person => ({ ...person, suspicion: 20 }));
+      renderCrew();
+      updateStatus();
+    })();
+  </script>
+</body>
+</html>
